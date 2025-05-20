@@ -1,5 +1,5 @@
 var map = L.map('map').setView([52.520, 13.404], 10);
-map.locate({setView: true, maxZoom: 16});
+map.locate({ setView: true, maxZoom: 15 });
 
 //52.520008, and the longitude is 13.404954
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -14,14 +14,54 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 L.geoJSON(bezirke, {
 }).addTo(map);
 
-function onLocationFound(e) {
-    var radius = e.accuracy;
+L.Control.Button = L.Control.extend({
+    onAdd: function(map) {
+        var button = L.DomUtil.create('a', "centerButton leaflet-bar leaflet-control");
+        
 
-    L.circle(e.latlng, {radius: radius/3, fill: true}).addTo(map)
-    L.circle(e.latlng, radius).addTo(map); 
+        button.src = '../../docs/images/logo.png';
+        
+
+        return button;
+    },
+
+    onRemove: function(map) {
+        // Nothing to do here
+    }
+});
+
+L.control.button = function(opts) {
+    return new L.Control.Button(opts);
 }
 
-map.on('locationfound', onLocationFound);
+L.control.button({ position: 'topleft' }).addTo(map);
+
+function setupLocation(e) {
+    var circles = onLocationFound(e);
+
+    setInterval(function () {
+        console.log("getting new location")
+        circles.forEach((cir) => {
+            console.log();
+            cir.redraw()
+        })
+    }, 10000)
+
+}
+
+
+function onLocationFound(e) {
+    //console.log(e.latlng);
+    var radius = e.accuracy;
+
+    var outer = L.circle(e.latlng, { radius: radius, stroke: false, fillOpacity: 0.4 }).addTo(map);
+    var inner = L.circle(e.latlng, { radius: radius / 3, fill: true, fillOpacity: 1, fillColor: "#3388ff", color: "white" }).addTo(map)
+    return [inner, outer]
+}
+
+
+
+map.on('locationfound', setupLocation);
 
 function onLocationError(e) {
     alert(e.message);
